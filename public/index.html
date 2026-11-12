@@ -66,6 +66,7 @@ body.play.touch #joy,body.play.touch #act{display:block}
 #cfStatus{font-size:14px;line-height:1.35}
 #cfStatus.ok{color:#2f7a3d}
 #cfStatus.bad{color:#b3321f}
+#cfStatus a{color:#2d4b7a;font-weight:500}
 .x{position:absolute;top:10px;right:12px;width:34px;height:34px;border-radius:50%;border:2px solid #5a3b2e;background:#fff;color:#5a3b2e;font:600 20px/1 sans-serif;cursor:pointer;z-index:2}
 .cardwrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;width:min(440px,92vw)}
 .cardwrap .x{top:-14px;right:-10px;background:#fff6e2}
@@ -1200,7 +1201,13 @@ async function sendContact(d){
     try{
       await sendContact({email:email,subject:subject,message:msg});
       lastSent=Date.now();f.reset();st.textContent='Sent. Thanks, I’ll get back to you soon.';st.className='ok';sfx.goal();
-    }catch(ex){st.textContent=(ex&&ex.message)||'Couldn’t send that. Please try again in a moment.';st.className='bad';}
+    }catch(ex){
+      st.className='bad';
+      if(ex&&ex.name==='TypeError'){
+        st.textContent='Couldn’t reach the mail service. ';
+        const a=document.createElement('a');a.href='mailto:'+CONTACT.to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(msg+'\n\n'+email);a.textContent='Email me directly instead.';st.appendChild(a);
+      }else st.textContent=(ex&&ex.message)||'Couldn’t send that. Please try again in a moment.';
+    }
     busy=false;btn.disabled=false;btn.textContent='Send';
   });
 })();
