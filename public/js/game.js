@@ -31,7 +31,9 @@ let VW=1,VH=1,DPR=1;
 function resize(){DPR=Math.min(window.devicePixelRatio||1,2);VW=window.innerWidth;VH=window.innerHeight;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);lightCv.width=Math.ceil(VW/2);lightCv.height=Math.ceil(VH/2);}
 window.addEventListener('resize',resize);resize();
 
-const G={ready:false,started:false,scene:'world',night:1,nightT:1,t:0,goals:0,shake:0,trans:null,dlg:null,loc:'',locT:0,helpT:0};
+/* night between 18:00 and 06:00 on the visitor’s clock, day otherwise (N still toggles) */
+const NIGHT0=(h=>h<6||h>=18?1:0)(new Date().getHours());
+const G={ready:false,started:false,scene:'world',night:NIGHT0,nightT:NIGHT0,t:0,goals:0,shake:0,trans:null,dlg:null,loc:'',locT:0,helpT:0};
 const keys={}, joy={x:0,y:0,run:false};
 const P={x:26*T,y:9.4*T,vx:0,vy:0,dir:'down',ph:0,mv:false,acc:0};
 const cam={x:0,y:0};
@@ -90,7 +92,7 @@ LAMPS.forEach(l=>solid(l.x-3,l.y-4,6,6));
 /* props */
 const SIGN={x:26*T,y:17.5*T};solid(SIGN.x-5,SIGN.y-5,10,7);
 const MAIL={x:23.2*T,y:21.8*T};solid(MAIL.x-4,MAIL.y-4,8,6);
-const CAT={x:13.6*T,y:31.3*T};
+const CAT={x:13.6*T,y:31.3*T,follow:false,mv:false,hop:0,stuck:0};
 const BENCHES=[{x:30.6*T,y:23.5*T},{x:21.2*T,y:22.6*T}];
 BENCHES.forEach(b=>solid(b.x-14,b.y-6,28,8));
 const MAP={x:28.3*T,y:10.7*T};solid(MAP.x-19,MAP.y-6,38,8);
@@ -102,6 +104,7 @@ const worldInter=[
   {x:MAP.x,y:MAP.y-6,r:38,dlg:'map',m:60},
   {x:FRIEND.x,y:FRIEND.y-8,r:32,dlg:'friend',m:50}
 ];
+const catInter=worldInter[2];
 
 /* trees */
 const TREEL=[];
@@ -623,19 +626,36 @@ function action(){
   if(G.trans||G.modal)return;
   if(G.dlg){advanceDlg();return;}
   if(ballNear()){shoot();return;}
-  const o=nearestInter();if(o){found(o.dlg);if(o.dlg==='mail')openModal('form');else if(o.dlg==='card')openModal('card');else if(o.dlg==='map')openModal('guide');else if(o.dlg==='friend')talkFriend();else openDlg(o.dlg);}
+  const o=nearestInter();if(o){found(o.dlg);if(o.dlg==='cat')CAT.follow=true;if(o.dlg==='mail')openModal('form');else if(o.dlg==='card')openModal('card');else if(o.dlg==='map')openModal('guide');else if(o.dlg==='friend')talkFriend();else openDlg(o.dlg);}
 }
 
 /* =====================================================================
    update
    ===================================================================== */
+/* once you’ve said hi, the cat tags along (outdoors only) */
+function updateCat(dt){
+  if(!CAT.follow)return;
+  const dx=P.x-CAT.x,dy=P.y-CAT.y,d=Math.hypot(dx,dy),ok=(x,y)=>!blockedAt(x,y,colliders,inPond);
+  CAT.mv=d>34;
+  if(CAT.mv){
+    const sp=Math.min(190,60+d*1.6),vx=dx/d*sp*dt,vy=dy/d*sp*dt;
+    if(ok(CAT.x+vx,CAT.y+vy)){CAT.x+=vx;CAT.y+=vy;CAT.stuck=0;}
+    else if(Math.abs(vx)>.05&&ok(CAT.x+vx,CAT.y)){CAT.x+=vx;CAT.stuck=0;}
+    else if(Math.abs(vy)>.05&&ok(CAT.x,CAT.y+vy)){CAT.y+=vy;CAT.stuck=0;}
+    else CAT.stuck+=dt;
+    CAT.hop+=dt*14;
+  }
+  /* too far away, or stuck behind a wall: pop up right behind the player */
+  if(d>340||CAT.stuck>1.2){const v=DIRV[P.dir];CAT.x=P.x-v[0]*22;CAT.y=P.y-v[1]*22+1;CAT.stuck=0;puff(CAT.x,CAT.y-8,6,'rgba(255,240,210,.7)',26,.5,2.4);}
+  catInter.x=CAT.x;catInter.y=CAT.y-6;
+}
 function worldScale(){return clamp(Math.min(VH/520,VW/430),.9,2.4);}
 function update(dt){
   G.night+=(G.nightT-G.night)*Math.min(1,dt*2.2);
   const can=G.started&&!G.dlg&&!G.trans&&!G.modal;
   if(G.scene==='world'){
     movePlayer(dt,colliders,{x0:T,y0:T,x1:WPX-T,y1:HPX-T},inPond,can);
-    updateBall(dt,can);
+    updateBall(dt,can);updateCat(dt);
     if(can){for(const b of BL){const d=b.door;if(P.x>d.x+4&&P.x<d.x+d.w-4&&P.y>d.y+4&&P.y<d.y+T-6){enterBuilding(b);break;}}}
     const S=worldScale(),vw=VW/S,vh=VH/S;
     let tx=P.x+P.vx*.3-vw/2,ty=P.y-14+P.vy*.3-vh/2;
@@ -740,7 +760,7 @@ function renderWorld(dt){
   for(const tr of TREEL){if(tr.x<cx-m||tr.x>cx+vw+m||tr.y<cy-10||tr.y>cy+vh+130)continue;objs.push({y:tr.y,f:()=>drawTree(tr,t)});}
   for(const l of LAMPS){if(l.x<cx-m||l.x>cx+vw+m||l.y<cy||l.y>cy+vh+60)continue;objs.push({y:l.y,f:()=>drawLamp(l)});}
   for(const b of BL){if(b.px+b.pw<cx-m||b.px>cx+vw+m||b.py+b.ph<cy-10||b.py>cy+vh+40)continue;objs.push({y:b.py+b.ph,f:()=>ctx.drawImage(b.spr,b.px-BPAD,b.py-BPAD,b.pw+BPAD*2,b.ph+BPAD*2)});}
-  objs.push({y:SIGN.y,f:drawSign},{y:MAIL.y,f:drawMail},{y:CAT.y,f:()=>drawCat(ctx,CAT.x,CAT.y,t)});
+  objs.push({y:SIGN.y,f:drawSign},{y:MAIL.y,f:drawMail},{y:CAT.y,f:()=>drawCat(ctx,CAT.x,CAT.y-(CAT.mv?Math.abs(Math.sin(CAT.hop))*3:0),t)});
   BENCHES.forEach(b=>objs.push({y:b.y,f:()=>drawBench(b)}));
   objs.push({y:MAP.y,f:drawMap},{y:FRIEND.y,f:()=>drawFriend(t)});
   objs.push({y:ball.y,f:()=>drawBallSprite(ctx,ball)});
@@ -1139,6 +1159,6 @@ async function sendContact(d){
   $('ccFlip').addEventListener('click',flip);
   call.addEventListener('click',e=>{if(shown)return;e.preventDefault();shown=true;call.setAttribute('href','tel:'+parts.join(''));call.removeAttribute('role');call.removeAttribute('data-i18n');call.textContent=parts.join(' ');sfx.blip();});
 })();
-window.__tolie={G:G,CONTACT:CONTACT,openModal:openModal,closeModal:closeModal,P:P,B:B,INT:INT,ball:ball,enterBuilding:enterBuilding,action:action,startGame:startGame};
+window.__tolie={CAT:CAT,G:G,CONTACT:CONTACT,openModal:openModal,closeModal:closeModal,P:P,B:B,INT:INT,ball:ball,enterBuilding:enterBuilding,action:action,startGame:startGame};
 init();
 })();

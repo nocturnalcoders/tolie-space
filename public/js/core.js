@@ -19,6 +19,17 @@ function s(key,vars){
 /* loc(obj,'blurb') → obj.blurb_id in Indonesian when it exists */
 const loc=(o,f)=>(lang==='id'&&o[f+'_id'])||o[f];
 
+/* latest blog posts from C.feed. The blog has to allow this origin (see README); if it doesn’t, nothing is shown. */
+let posts=[];
+function loadPosts(){
+  if(!C.feed||!window.fetch||!window.DOMParser)return;
+  fetch(C.feed).then(r=>{if(!r.ok)throw 0;return r.text();}).then(x=>{
+    const d=new DOMParser().parseFromString(x,'text/xml'),txt=(n,q)=>{const e=n.querySelector(q);return e?(e.textContent||'').trim():'';};
+    posts=Array.from(d.querySelectorAll('item')).slice(0,3).map(n=>({t:txt(n,'title'),u:txt(n,'link'),d:txt(n,'pubDate')})).filter(p=>p.t&&/^https?:\/\//.test(p.u));
+    if(posts.length){build();window.dispatchEvent(new Event('tolie:posts'));}
+  }).catch(()=>{});
+}
+
 /* DL is rebuilt in place so the town and the plain view never drift apart */
 function build(){
   Object.keys(BASE).forEach(k=>{
@@ -33,6 +44,11 @@ function build(){
     :[s('{role}, based in {loc}.',{role:C.role,loc:loc(C,'location')}),s('The full timeline lives on LinkedIn.')];
   DL.career.links=[{t:'LinkedIn',u:C.linkedin}].concat(C.cv?[{t:s('Download CV'),u:C.cv}]:[]);
   DL.projects.pages=DL.projects.pages.concat(PROJECTS.map(p=>p.name+': '+loc(p,'blurb')+' ('+p.stack.join(', ')+')'));
+  if(posts.length){
+    const cut=t=>t.length>34?t.slice(0,32).trim()+'…':t;
+    DL.blogDesk.pages.push(s('Latest on the blog: {list}.',{list:posts.map(p=>'“'+p.t+'”').join(', ')}));
+    DL.blogDesk.links=posts.map(p=>({t:cut(p.t),u:p.u})).concat(DL.blogDesk.links);
+  }
   DL.projects.links=PROJECTS.filter(p=>p.url&&p.url!==C.site).map(p=>({t:p.name,u:p.url})).concat([{t:s('More on GitHub'),u:C.github}]);
 }
 
@@ -64,5 +80,6 @@ if(ANALYTICS.src&&ANALYTICS.websiteId){
 build();apply();
 document.querySelectorAll('[data-lang-toggle]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleLang();b.blur();}));
 
-W.s=s;W.loc=loc;W.lang=()=>lang;W.setLang=setLang;W.toggleLang=toggleLang;W.track=track;
+loadPosts();
+W.posts=()=>posts;W.s=s;W.loc=loc;W.lang=()=>lang;W.setLang=setLang;W.toggleLang=toggleLang;W.track=track;
 })();

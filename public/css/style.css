@@ -99,6 +99,7 @@ body.play.touch #joy,body.play.touch #act{display:block}
 .pv button{font:500 15px 'Fredoka',sans-serif;cursor:pointer}
 .pv a:focus-visible,.pv button:focus-visible{outline:3px solid #3f6aa8;outline-offset:3px;border-radius:6px}
 .pv-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
+.pv-top div{display:flex;flex-wrap:wrap;gap:8px}
 .pv-top button{padding:6px 14px;background:#fff;color:#5a3b2e;border:2px solid #5a3b2e;border-radius:999px}
 .pv-head{display:flex;align-items:center;gap:20px;margin:26px 0 14px}
 .pv-head img{width:96px;height:96px;flex:none;border-radius:50%;object-fit:cover;border:3px solid #5a3b2e}
@@ -143,3 +144,40 @@ body.play.touch #joy,body.play.touch #act{display:block}
 #ovGuide .panel{width:min(560px,100%)}
 #gdMap{display:block;width:100%;height:auto;margin:8px 0 2px;border:2px solid #5a3b2e;border-radius:12px;background:#3c7a4a}
 #gdList p{margin:0 0 5px;color:#6b5a60;font-size:14px}
+
+/* plain view: section links, latest posts, print / save as PDF */
+.pv-anchor{margin-left:8px;color:rgba(90,59,46,.35)!important;text-decoration:none}
+.pv h2:hover .pv-anchor,.pv-anchor:focus-visible{color:#b4502f!important}
+.pv-posts li+li{margin-top:8px}
+.pv-posts .pv-meta{margin-left:8px;white-space:nowrap}
+.pv-print{display:none}
+@media print{
+@page{margin:14mm}
+:root{color-scheme:light}
+html,body{height:auto;overflow:visible;background:#fff!important}
+body>*:not(#plain){display:none!important}
+#plain,#plain[hidden]{display:block!important;position:static;overflow:visible;background:#fff}
+.pv{max-width:none;padding:0;font-size:9.5pt;line-height:1.4}
+.pv h1{font-size:22pt}
+.pv h3{font-size:11pt}
+.pv-role,.pv .pv-sum{font-size:10.5pt}
+.pv .pv-sum{margin-bottom:8px}
+.pv dd{min-width:0}
+.pv dl{gap:5px 16px}
+.pv-top,.pv footer,.pv-links button,.pv-anchor{display:none!important}
+.pv-print{display:block;color:#444}
+.pv-head{margin-top:0}
+.pv-head img{width:64px;height:64px}
+.pv-links{gap:2px 22px}
+.pv-links a{padding:0;background:none;border:0;color:#2d4b7a;font-size:9.5pt}
+.pv-links a::after,.pv-plinks a::after,.pv-posts a::after{content:'  ' attr(href);font-weight:400;color:#555;word-break:break-all}
+.pv section{margin-top:14px}
+.pv h2{margin-bottom:8px;break-after:avoid}
+.pv-tags span{font-size:8.5pt}
+.pv-proj{grid-template-columns:1fr 1fr;gap:8px}
+.pv-proj li,.pv-jobs li,.pv-posts li{break-inside:avoid}
+.pv-proj li{padding:8px 10px;border-width:1px}
+.pv-proj .pv-plinks{display:block;font-size:8.5pt}
+.pv-plinks a{display:block}
+.pv-posts .pv-meta{white-space:normal}
+}

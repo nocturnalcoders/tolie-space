@@ -25,6 +25,29 @@ Almost every change is in `public/js/content.js`:
 - `ID` — the Indonesian version. `ID.dl` mirrors `DL`; `ID.str` translates every other piece of
   text, keyed by its English wording. Anything missing falls back to English.
 
+## Plain view links
+
+- `tolie.space/#plain` opens the plain view. `#experience`, `#projects`, `#writing`, `#skills`,
+  `#education` and `#interests` open it at that section.
+- “Save as PDF” in the plain view (or printing the site from anywhere) gives a two-page résumé.
+
+## Latest blog posts
+
+The writing desk and the plain view show the three newest posts from `C.feed`
+(`blog.tolie.space/feed.xml`). The browser only allows that if the blog says so, so add two
+lines to the blog block in `/etc/caddy/Caddyfile`, then `systemctl reload caddy`:
+
+```
+blog.tolie.space {
+    encode zstd gzip
+    @feed path /feed.xml
+    header @feed Access-Control-Allow-Origin https://tolie.space
+    reverse_proxy 127.0.0.1:8788
+}
+```
+
+Until then (or if the blog is down) the posts are simply not shown.
+
 ## Run locally
 
 ```bash

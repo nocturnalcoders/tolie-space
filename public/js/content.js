@@ -14,6 +14,7 @@ const C={
   github:'https://github.com/nocturnalcoders',
   linkedin:'https://www.linkedin.com/in/christianto-lie',
   blog:'https://blog.tolie.space', lab:'https://lab.tolie.space',
+  feed:'https://blog.tolie.space/feed.xml',   // latest posts on the writing desk and in the plain view; '' turns it off (see README)
   cv:''            // e.g. 'assets/christianto-lie-cv.pdf' — the CV links appear once this is set
 };
 /* Work history. Leave empty to point people at LinkedIn instead.
@@ -76,7 +77,7 @@ const PLACE_INFO={
 const DL={
   sign:{name:'Signpost',pages:['Welcome to tolie.space.','I’m Christianto Lie, but most people call me tolie. Senior software engineer, futsal player, night walker.','Wander around, peek inside the houses, and kick the ball on the court. Everything here is me, one way or another.','Anything with a little star above it has something to say. The map board by the house, or the M key, shows what you haven’t found yet.']},
   mail:{name:'Mailbox',pages:['Want to say hi? I’m nocturnalcoders on GitHub.','Longer thoughts live on the blog, and the half-baked experiments live in the lab.'],links:[{t:'GitHub',u:C.github},{t:'Blog',u:C.blog},{t:'Lab',u:C.lab}]},
-  cat:{name:'Cat',pages:['Mrrp.','(The cat has no opinion on your code, but it approves of your company.)']},
+  cat:{name:'Cat',pages:['Mrrp.','(The cat has no opinion on your code, but it approves of your company.)','(It seems to have decided to follow you.)']},
   map:{name:'Map board',pages:[]},
   friend:{name:'Futsal buddy',pages:['Oi! You look like you can play.','Challenge: put 3 goals in the net. Stand next to the ball and press E to shoot.','Come back when you’re done.']},
   friendGo:{name:'Futsal buddy',pages:['{n} of 3 so far. Keep shooting.']},
@@ -116,7 +117,7 @@ const ID={
   dl:{
     sign:{name:'Papan penunjuk',pages:['Selamat datang di tolie.space.','Saya Christianto Lie, tapi kebanyakan orang memanggil saya tolie. Senior software engineer, pemain futsal, pejalan malam.','Jalan-jalan saja, intip isi rumah-rumahnya, dan tendang bola di lapangan. Semua yang ada di sini adalah saya, dengan satu atau lain cara.','Apa pun yang ada bintang kecil di atasnya punya cerita. Papan peta di dekat rumah, atau tombol M, menunjukkan apa yang belum kamu temukan.']},
     mail:{name:'Kotak surat',pages:['Mau menyapa? Saya nocturnalcoders di GitHub.','Tulisan yang lebih panjang ada di blog, dan eksperimen setengah matang ada di lab.']},
-    cat:{name:'Kucing',pages:['Mrrp.','(Kucing ini tidak punya pendapat soal kodemu, tapi dia senang ditemani.)']},
+    cat:{name:'Kucing',pages:['Mrrp.','(Kucing ini tidak punya pendapat soal kodemu, tapi dia senang ditemani.)','(Sepertinya dia memutuskan untuk mengikutimu.)']},
     map:{name:'Papan peta'},
     friend:{name:'Teman futsal',pages:['Oi! Kelihatannya kamu bisa main.','Tantangan: cetak 3 gol. Berdiri di dekat bola lalu tekan E untuk menendang.','Balik lagi kalau sudah selesai.']},
     friendGo:{name:'Teman futsal',pages:['Baru {n} dari 3. Tendang terus.']},
@@ -174,6 +175,7 @@ const ID={
     'The full timeline lives on LinkedIn.':'Riwayat lengkapnya ada di LinkedIn.',
     '{role} at {company}, {period}.':'{role} di {company}, {period}.',
     'More on GitHub':'Lainnya di GitHub','Download CV':'Unduh CV',
+    'Latest on the blog: {list}.':'Terbaru di blog: {list}.',
     /* contact form */
     'Contact me':'Hubungi saya',
     'Drop a note in the mailbox and it lands in my inbox.':'Tinggalkan pesan di kotak surat, nanti langsung masuk ke inbox saya.',
@@ -193,7 +195,7 @@ const ID={
     /* plain view */
     '← Back to the town':'← Kembali ke kota','Enter the town →':'Masuk ke kota →','Send a message':'Kirim pesan',
     'Experience':'Pengalaman','Projects':'Project','Skills':'Keahlian','Education':'Pendidikan','Off the clock':'Di luar jam kerja',
-    'Visit':'Kunjungi','Source':'Kode sumber'
+    'Visit':'Kunjungi','Source':'Kode sumber','Writing':'Tulisan','Save as PDF':'Simpan sebagai PDF','Link to this section':'Tautan ke bagian ini'
   }
 };
 /* English for the few keys that are not their own wording */
