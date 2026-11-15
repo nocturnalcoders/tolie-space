@@ -13,20 +13,20 @@
 <meta property="og:url" content="https://tolie.space/">
 <meta property="og:title" content="tolie.space — Christianto Lie’s little town">
 <meta property="og:description" content="Christianto Lie (tolie) is a senior software engineer in Singapore. Walk around his little town to see his work, projects and hobbies, or skip straight to the plain résumé.">
-<meta property="og:image" content="https://tolie.space/assets/og.png">
+<meta property="og:image" content="https://tolie.space/assets/og.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="A small hand-drawn town at night with the title tolie.space">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="tolie.space — Christianto Lie’s little town">
 <meta name="twitter:description" content="Christianto Lie (tolie) is a senior software engineer in Singapore. Walk around his little town to see his work, projects and hobbies, or skip straight to the plain résumé.">
-<meta name="twitter:image" content="https://tolie.space/assets/og.png">
+<meta name="twitter:image" content="https://tolie.space/assets/og.jpg">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=3">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Person","name":"Christianto Lie","alternateName":"tolie","jobTitle":"Senior Software Engineer","url":"https://tolie.space/","image":"https://tolie.space/assets/avatar.jpg","address":{"@type":"PostalAddress","addressCountry":"SG"},"alumniOf":{"@type":"CollegeOrUniversity","name":"Universitas Bunda Mulia"},"sameAs":["https://www.linkedin.com/in/christianto-lie","https://github.com/nocturnalcoders","https://blog.tolie.space","https://lab.tolie.space"]}
 </script>
@@ -34,28 +34,29 @@
 <body>
 <canvas id="c"></canvas>
 <div id="loc" class="hud"></div>
-<div id="score" class="hud">Goals<b id="goals">0</b></div>
-<div id="btns" class="hud"><button id="bPlain" data-plain="open" aria-label="Plain view" title="Plain view: skip the game">&#9776;</button><button id="bNight" aria-label="Toggle day and night" title="Day / night (N)">&#9790;</button><button id="bSnd" aria-label="Toggle sound" title="Sound (M)">&#9835;</button></div>
-<div id="help" class="hud">WASD or arrows to move &middot; Shift to run &middot; E to interact or shoot</div>
+<div id="score" class="hud"><span data-i18n>Goals</span><b id="goals">0</b></div>
+<button id="found" class="hud" type="button" data-modal="guide" data-i18n-aria aria-label="Town guide" data-i18n-title title="Town guide (M)">&#9733;<b id="foundN">0/0</b></button>
+<div id="btns" class="hud"><button id="bPlain" data-plain="open" aria-label="Plain view" data-i18n-title title="Plain view: skip the game">&#9776;</button><button id="bLang" data-lang-toggle data-i18n="langBtn" data-i18n-aria="langAria" aria-label="Ganti ke Bahasa Indonesia">ID</button><button id="bNight" aria-label="Toggle day and night" data-i18n-title title="Day / night (N)">&#9790;</button><button id="bSnd" aria-label="Toggle sound" data-i18n-title title="Sound (V)">&#9835;</button></div>
+<div id="help" class="hud" data-i18n>WASD or arrows to move &middot; Shift to run &middot; E to interact or shoot</div>
 <div id="dlg" role="dialog" aria-live="polite"><div id="dName"></div><div id="dText"></div><div id="dLinks"></div><div id="dNext">&#9660;</div></div>
-<div id="title"><h1>tolie.space</h1><p>Christianto Lie’s little town</p><button id="start" disabled>Loading…</button><div id="keys">Best with sound on</div><button id="toPlain" type="button" data-plain="open">Skip the game, just the résumé →</button></div>
+<div id="title"><h1>tolie.space</h1><p data-i18n>Christianto Lie’s little town</p><button id="start" data-i18n disabled>Loading…</button><div id="keys" data-i18n>Best with sound on</div><div id="tlinks"><button id="toPlain" type="button" data-plain="open" data-i18n>Skip the game, just the résumé →</button><button id="toLang" type="button" data-lang-toggle data-i18n="langName" lang="id">Bahasa Indonesia</button></div></div>
 <div id="joy"><div id="knob"></div></div><button id="act" aria-label="Interact">E</button>
 <div id="ovForm" class="ov" aria-hidden="true">
 <form id="contactForm" class="panel" novalidate role="dialog" aria-labelledby="cfTitle">
 <button type="button" class="x" id="cfClose" aria-label="Close">&times;</button>
-<h2 id="cfTitle">Contact me</h2>
-<p class="sub">Drop a note in the mailbox and it lands in my inbox.</p>
-<label for="cfEmail">Your email</label>
+<h2 id="cfTitle" data-i18n>Contact me</h2>
+<p class="sub" data-i18n>Drop a note in the mailbox and it lands in my inbox.</p>
+<label for="cfEmail" data-i18n>Your email</label>
 <input id="cfEmail" name="email" type="email" maxlength="120" autocomplete="email">
 <div class="err" id="cfEmailErr"></div>
-<label for="cfSubject">Subject</label>
+<label for="cfSubject" data-i18n>Subject</label>
 <input id="cfSubject" name="subject" type="text" maxlength="120" autocomplete="off">
 <div class="err" id="cfSubjectErr"></div>
-<label for="cfMsg">Message</label>
+<label for="cfMsg" data-i18n>Message</label>
 <textarea id="cfMsg" name="message" rows="5" maxlength="2000"></textarea>
 <div class="err" id="cfMsgErr"></div>
 <input id="cfBot" name="botcheck" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" class="hp">
-<div class="row"><button type="submit" id="cfSend">Send</button><span id="cfStatus" role="status"></span></div>
+<div class="row"><button type="submit" id="cfSend" data-i18n>Send</button><span id="cfStatus" role="status"></span></div>
 </form>
 </div>
 <div id="ovCard" class="ov" aria-hidden="true">
@@ -72,13 +73,22 @@
 <div><span class="k">LinkedIn</span><a href="https://www.linkedin.com/in/christianto-lie" target="_blank" rel="noopener noreferrer">linkedin.com/in/christianto-lie</a></div>
 <div><span class="k">GitHub</span><a href="https://github.com/nocturnalcoders" target="_blank" rel="noopener noreferrer">github.com/nocturnalcoders</a></div>
 <div><span class="k">Website</span><a href="https://tolie.space" target="_blank" rel="noopener noreferrer">tolie.space</a></div>
-<div><span class="k">Phone</span><a id="ccCall" href="#" role="button">Show number</a></div>
-<div class="fine">Made after dark.</div>
+<div><span class="k" data-i18n>Phone</span><a id="ccCall" href="#" role="button" data-i18n>Show number</a></div>
+<div class="fine" data-i18n>Made after dark.</div>
 </div>
 </div>
 </div>
-<button type="button" id="ccFlip">Flip card</button>
-<p class="hint">Click the card to flip it. Esc to close.</p>
+<button type="button" id="ccFlip" data-i18n>Flip card</button>
+<p class="hint" data-i18n>Click the card to flip it. Esc to close.</p>
+</div>
+</div>
+<div id="ovGuide" class="ov" aria-hidden="true">
+<div class="panel" role="dialog" aria-labelledby="gdTitle">
+<button type="button" class="x" id="gdClose" aria-label="Close">&times;</button>
+<h2 id="gdTitle" data-i18n>Town guide</h2>
+<p class="sub" id="gdSub"></p>
+<canvas id="gdMap" width="1040" height="760" role="img" aria-label="Map of the town"></canvas>
+<div id="gdList"></div>
 </div>
 </div>
 <div id="fade"></div>
@@ -90,8 +100,10 @@
 <p><a href="https://www.linkedin.com/in/christianto-lie">LinkedIn</a> · <a href="https://github.com/nocturnalcoders">GitHub</a> · <a href="https://blog.tolie.space">Blog</a> · <a href="https://lab.tolie.space">Lab</a> · <a href="mailto:hi@tolie.space">hi@tolie.space</a></p>
 </div></noscript>
 
-<script src="js/content.js"></script>
-<script src="js/plain.js"></script>
-<script src="js/game.js"></script>
+<!-- bump ?v= on every deploy that changes css or js, so returning visitors get the new files -->
+<script src="js/content.js?v=3"></script>
+<script src="js/core.js?v=3"></script>
+<script src="js/plain.js?v=3"></script>
+<script src="js/game.js?v=3"></script>
 </body>
 </html>

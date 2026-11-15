@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const {CONTACT,DL,plain:PLAIN}=window.TOLIE;
+const {CONTACT,DL,PLACE_INFO,plain:PLAIN,s:say,loc,track}=window.TOLIE;
 
 /* =====================================================================
    helpers
@@ -93,10 +93,14 @@ const MAIL={x:23.2*T,y:21.8*T};solid(MAIL.x-4,MAIL.y-4,8,6);
 const CAT={x:13.6*T,y:31.3*T};
 const BENCHES=[{x:30.6*T,y:23.5*T},{x:21.2*T,y:22.6*T}];
 BENCHES.forEach(b=>solid(b.x-14,b.y-6,28,8));
+const MAP={x:28.3*T,y:10.7*T};solid(MAP.x-19,MAP.y-6,38,8);
+const FRIEND={x:44.4*T,y:18.3*T};solid(FRIEND.x-6,FRIEND.y-5,12,7);
 const worldInter=[
-  {x:SIGN.x,y:SIGN.y-6,r:34,dlg:'sign'},
-  {x:MAIL.x,y:MAIL.y-6,r:30,dlg:'mail'},
-  {x:CAT.x,y:CAT.y-6,r:30,dlg:'cat'}
+  {x:SIGN.x,y:SIGN.y-6,r:34,dlg:'sign',m:52},
+  {x:MAIL.x,y:MAIL.y-6,r:30,dlg:'mail',m:40},
+  {x:CAT.x,y:CAT.y-6,r:30,dlg:'cat',m:26},
+  {x:MAP.x,y:MAP.y-6,r:38,dlg:'map',m:60},
+  {x:FRIEND.x,y:FRIEND.y-8,r:32,dlg:'friend',m:50}
 ];
 
 /* trees */
@@ -140,6 +144,7 @@ BL.forEach(b=>{addLight(b.px+b.pw/2,b.py+b.ph+8,86,'255,190,100',.9,.03);});
 [[33.5,6.5],[50.5,6.5],[33.5,16.5],[50.5,16.5],[42,6.5],[42,16.5]].forEach(p=>addLight(p[0]*T,p[1]*T,170,'190,220,255',.95,0));
 addLight(SIGN.x,SIGN.y-20,70,'255,200,120',.7,.04);
 addLight(MAIL.x,MAIL.y-10,40,'255,200,120',.5,0);
+addLight(MAP.x,MAP.y-26,64,'255,200,120',.65,0);
 
 /* =====================================================================
    interiors
@@ -204,6 +209,32 @@ const WALL_T={window:1,poster:1,board:1,screen:1,diploma:1,jersey:1,tv:1,moviepo
 Object.keys(INT).forEach(k=>{INT[k].id=k;INT[k].label=B[k].label;});
 let intCol=[];
 function buildIntCol(I){intCol=[];I.obj.forEach(o=>{if(o.col){intCol.push({x:(o.x+o.col[0])*T,y:(o.y+o.col[1])*T,w:o.col[2]*T,h:o.col[3]*T});}else if(['desk','bed','trophy','shelf','rack','coffee','sofa','bench','plant'].indexOf(o.t)>=0){intCol.push({x:o.x*T,y:(o.y+o.h*.45)*T,w:o.w*T,h:o.h*.55*T});}});}
+
+/* =====================================================================
+   discoveries: what the visitor has opened, kept across visits
+   ===================================================================== */
+const PLACES=[{id:'world',label:'Around town',keys:worldInter.map(o=>o.dlg)}].concat(BL.map(b=>({id:b.id,label:b.label,keys:INT[b.id].obj.filter(o=>o.dlg).map(o=>o.dlg)})));
+const ALLK=[];PLACES.forEach(p=>p.keys.forEach(k=>{if(ALLK.indexOf(k)<0)ALLK.push(k);}));
+const seen=new Set();
+try{JSON.parse(localStorage.getItem('tolie.seen')||'[]').forEach(k=>{if(ALLK.indexOf(k)>=0)seen.add(k);});}catch(e){}
+function updFound(){
+  $('foundN').textContent=seen.size+'/'+ALLK.length;
+  BL.forEach((b,i)=>{b.todo=PLACES[i+1].keys.some(k=>!seen.has(k));});
+}
+function found(key){
+  if(seen.has(key)||ALLK.indexOf(key)<0)return;
+  seen.add(key);try{localStorage.setItem('tolie.seen',JSON.stringify(Array.from(seen)));}catch(e){}
+  updFound();
+  if(seen.size===ALLK.length){sfx.goal();if(G.scene==='world')confetti(P.x,P.y-20);showLoc('You found everything!');G.locT=5;track('found-all');}
+}
+/* futsal buddy’s challenge: 3 goals after you talk to him */
+const quest={on:false,base:0,done:false};
+try{quest.done=localStorage.getItem('tolie.quest')==='1';}catch(e){}
+function talkFriend(){
+  if(quest.done)openDlg('friendDone');
+  else if(!quest.on){quest.on=true;quest.base=G.goals;openDlg('friend');}
+  else openDlg('friendGo',{n:G.goals-quest.base});
+}
 
 /* =====================================================================
    ground prerender (the “tilemap”)
@@ -487,7 +518,8 @@ function ballCenter(){ball.x=(FX0+FX1)/2;ball.y=GCY;ball.vx=ball.vy=0;}
 function goal(side){
   G.goals++;$('goals').textContent=G.goals;ball.reset=1.7;ball.vx=ball.vy=0;
   confetti(ball.x,ball.y);sfx.goal();G.shake=.7;
-  pops.push({x:(FX0+FX1)/2,y:GCY-30,txt:'GOAL!',l:1.8,m:1.8});
+  pops.push({x:(FX0+FX1)/2,y:GCY-30,txt:say('GOAL!'),l:1.8,m:1.8});track('goal');
+  if(quest.on&&!quest.done&&G.goals-quest.base>=3){quest.done=true;try{localStorage.setItem('tolie.quest','1');}catch(e){}showLoc('Challenge complete!');G.locT=4;track('quest-done');}
 }
 function updateBall(dt,can){
   const b=ball;
@@ -516,8 +548,10 @@ function shoot(){const v=DIRV[P.dir];const d=Math.hypot(P.x-ball.x,(P.y-3)-ball.
 /* =====================================================================
    dialog
    ===================================================================== */
-function openDlg(key){
-  const d=DL[key];if(!d)return;
+function openDlg(key,vars){
+  let d=DL[key];if(!d||!d.pages.length)return;
+  if(vars)d={name:d.name,links:d.links,pages:d.pages.map(p=>{for(const n in vars)p=p.split('{'+n+'}').join(vars[n]);return p;})};
+  track('open',{item:key});
   G.dlg={d:d,page:0,shown:0,done:false,acc:0};
   $('dName').textContent=d.name;$('dText').textContent='';$('dLinks').innerHTML='';$('dNext').style.visibility='hidden';
   $('dlg').classList.add('on');sfx.blip();if(key==='cat')sfx.meow();
@@ -570,12 +604,12 @@ function movePlayer(dt,list,bd,extra,can){
 }
 function go(cb){if(G.trans)return;G.trans={a:0,dir:1,cb:cb};}
 function enterBuilding(b){
-  sfx.door();go(()=>{G.scene=b.id;const I=INT[b.id];buildIntCol(I);P.x=I.w*T/2;P.y=I.h*T-14;P.vx=P.vy=0;P.dir='up';showLoc(b.label);});
+  sfx.door();go(()=>{G.scene=b.id;const I=INT[b.id];buildIntCol(I);P.x=I.w*T/2;P.y=I.h*T-14;P.vx=P.vy=0;P.dir='up';showLoc(b.label);track('enter',{place:b.id});});
 }
 function exitBuilding(){
   const b=B[G.scene];sfx.door();go(()=>{G.scene='world';P.x=b.door.x+T;P.y=b.py+b.ph+18;P.vx=P.vy=0;P.dir='down';showLoc(areaName());});
 }
-function showLoc(name){G.loc=name;const el=$('loc');el.textContent=name;el.classList.add('on');G.locT=2.6;}
+function showLoc(name){G.loc=name;const el=$('loc');el.textContent=say(name);el.classList.add('on');G.locT=2.6;}
 const AREAS=[{n:'Futsal court',x:42,y:11.5,r:9},{n:'The plaza',x:26,y:20,r:6},{n:'Lily pond',x:32,y:26.5,r:5},{n:'Home street',x:26,y:9,r:5},{n:'Office row',x:11,y:13,r:7},{n:'Blog lane',x:10,y:29,r:6},{n:'Hobby den',x:20,y:29,r:4},{n:'Lab yard',x:43,y:30,r:7}];
 function areaName(){for(const a of AREAS){if(Math.hypot(P.x/T-a.x,P.y/T-a.y)<a.r)return a.n;}return 'Tolie town';}
 function nearestInter(){
@@ -589,7 +623,7 @@ function action(){
   if(G.trans||G.modal)return;
   if(G.dlg){advanceDlg();return;}
   if(ballNear()){shoot();return;}
-  const o=nearestInter();if(o){if(o.dlg==='mail')openModal('form');else if(o.dlg==='card')openModal('card');else openDlg(o.dlg);}
+  const o=nearestInter();if(o){found(o.dlg);if(o.dlg==='mail')openModal('form');else if(o.dlg==='card')openModal('card');else if(o.dlg==='map')openModal('guide');else if(o.dlg==='friend')talkFriend();else openDlg(o.dlg);}
 }
 
 /* =====================================================================
@@ -665,6 +699,25 @@ function drawBallSprite(c,b){
   pent(0,0,2.5);for(let i=0;i<5;i++){const a=i/5*6.283;pent(Math.cos(a)*b.r*.78,Math.sin(a)*b.r*.78,1.6);}
   c.restore();
 }
+function drawMap(){
+  ctx.save();ctx.translate(MAP.x,MAP.y);ctx.scale(1.35,1.35);
+  const x=0,y=0;shadowE(ctx,x,y,17,4,.3);
+  ctx.fillStyle='#6b4527';ctx.fillRect(x-13,y-30,3,30);ctx.fillRect(x+10,y-30,3,30);
+  rrect(ctx,x-17,y-42,34,26,3);fs(ctx,'#8a5a34','#2f1d10',1.2);
+  ctx.fillStyle='#fff1d2';ctx.fillRect(x-14,y-39,28,20);
+  ctx.strokeStyle='#d9c39a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-12,y-29);ctx.lineTo(x+12,y-29);ctx.moveTo(x,y-37);ctx.lineTo(x,y-21);ctx.stroke();
+  [[-10,-37,'#c8553d'],[-11,-26,'#7a8f3d'],[4,-37,'#3f6aa8'],[5,-26,'#2f7f86'],[-4,-26,'#8a4a8f']].forEach(q=>{ctx.fillStyle=q[2];ctx.fillRect(x+q[0],y+q[1],6,5);});
+  ctx.fillStyle='#e8744f';ell(ctx,x+1,y-29,1.8,1.8);ctx.fill();
+  ctx.restore();
+}
+const KF={shirt:'#2d5fa8',shirtS:'#234a85',hair:'#1f1a22',hairD:'#141018',hairL:'#3a3040',short:'#a8324a'};
+function drawFriend(t){const sv={};for(const k in KF){sv[k]=K[k];K[k]=KF[k];}drawChibi(ctx,FRIEND.x,FRIEND.y,'down',0,false,t+1.3);for(const k in sv)K[k]=sv[k];}
+/* the little star above anything not opened yet */
+function drawMark(x,y,t){
+  ctx.save();ctx.translate(x,y+Math.sin(t*3+x)*2);ctx.globalAlpha=.8+.2*Math.sin(t*4+x);
+  ctx.beginPath();for(let i=0;i<8;i++){const r=i%2?2.2:6.5,a=i/8*6.283-1.571;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r);}ctx.closePath();
+  fs(ctx,'#ffd24a','#5a2a12',1);ctx.restore();
+}
 function renderWorld(dt){
   const S=worldScale(),vw=VW/S,vh=VH/S,t=G.t;
   let cx=cam.x,cy=cam.y;if(G.shake>0){cx+=(Math.random()-.5)*G.shake*7;cy+=(Math.random()-.5)*G.shake*7;}
@@ -680,7 +733,7 @@ function renderWorld(dt){
   ctx.restore();
   /* scoreboard */
   ctx.fillStyle='#1b2438';rrect(ctx,41*T-26,FEY0-22,52+T,22,5);fs(ctx,'#1b2438','#e9f1fb',1.5);
-  ctx.font='600 13px '+FONT;ctx.fillStyle='#ffd24a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('GOALS  '+G.goals,42*T-10+10,FEY0-11);
+  ctx.font='600 13px '+FONT;ctx.fillStyle='#ffd24a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(say('GOALS')+'  '+G.goals,42*T-10+10,FEY0-11);
   /* sorted objects */
   objs.length=0;
   const m=70;
@@ -689,6 +742,7 @@ function renderWorld(dt){
   for(const b of BL){if(b.px+b.pw<cx-m||b.px>cx+vw+m||b.py+b.ph<cy-10||b.py>cy+vh+40)continue;objs.push({y:b.py+b.ph,f:()=>ctx.drawImage(b.spr,b.px-BPAD,b.py-BPAD,b.pw+BPAD*2,b.ph+BPAD*2)});}
   objs.push({y:SIGN.y,f:drawSign},{y:MAIL.y,f:drawMail},{y:CAT.y,f:()=>drawCat(ctx,CAT.x,CAT.y,t)});
   BENCHES.forEach(b=>objs.push({y:b.y,f:()=>drawBench(b)}));
+  objs.push({y:MAP.y,f:drawMap},{y:FRIEND.y,f:()=>drawFriend(t)});
   objs.push({y:ball.y,f:()=>drawBallSprite(ctx,ball)});
   objs.push({y:P.y,f:()=>drawChibi(ctx,P.x,P.y,P.dir,P.ph,P.mv,t)});
   objs.sort((a,b)=>a.y-b.y);
@@ -700,10 +754,15 @@ function renderWorld(dt){
   /* fireflies */
   if(G.night>.05){ctx.save();for(const f of FF){if(f.x<cx-10||f.x>cx+vw+10||f.y<cy-10||f.y>cy+vh+10)continue;const a=(.5+.5*Math.sin(t*2+f.ph))*G.night;const gr=ctx.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*5);gr.addColorStop(0,'rgba(255,240,140,'+(a*.9)+')');gr.addColorStop(1,'rgba(255,240,140,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(f.x,f.y,f.r*5,0,6.3);ctx.fill();}ctx.restore();}
   /* interaction prompt */
-  if(G.started&&!G.dlg&&!G.trans){
-    let pt=null;
-    if(ballNear())pt={x:ball.x,y:ball.y-22};else{const o=nearestInter();if(o)pt={x:o.x,y:o.y-30};}
-    if(pt)drawPrompt(pt.x,pt.y+Math.sin(t*5)*2);
+  if(G.started&&!G.trans){
+    const near=G.dlg?null:nearestInter();
+    for(const o of worldInter){if(!seen.has(o.dlg)&&o!==near)drawMark(o.x,o.y-o.m,t);}
+    for(const b of BL){if(b.todo)drawMark(b.door.x+T,b.py-6,t);}
+    if(!G.dlg){
+      let pt=null;
+      if(ballNear())pt={x:ball.x,y:ball.y-22};else if(near)pt={x:near.x,y:near.y-30};
+      if(pt)drawPrompt(pt.x,pt.y+Math.sin(t*5)*2);
+    }
   }
 }
 function drawPrompt(x,y){
@@ -893,7 +952,11 @@ function renderInterior(){
   ctx.globalCompositeOperation='source-over';
   const vg=ctx.createRadialGradient(Wp/2,Hp/2,Hp*.35,Wp/2,Hp/2,Wp*.75);vg.addColorStop(0,'rgba(20,10,40,0)');vg.addColorStop(1,'rgba(20,10,40,.5)');ctx.fillStyle=vg;ctx.fillRect(0,0,Wp,Hp);
   ctx.fillStyle='rgba(255,170,90,.05)';ctx.fillRect(0,0,Wp,Hp);ctx.fillStyle='rgba(20,30,90,'+(.2*G.night)+')';ctx.fillRect(0,0,Wp,Hp);
-  if(G.started&&!G.dlg&&!G.trans){const o=nearestInter();if(o)drawPrompt(o.x,o.y-14+Math.sin(t*5)*2);}
+  if(G.started&&!G.trans){
+    const near=G.dlg?null:nearestInter();
+    I.obj.forEach(o=>{if(o.dlg&&!seen.has(o.dlg)&&!(near&&near.dlg===o.dlg))drawMark((o.x+o.w/2)*T,o.y*T+(WALL_T[o.t]?o.h*T*.4-12:-8),t);});
+    if(near)drawPrompt(near.x,near.y-14+Math.sin(t*5)*2);
+  }
 }
 
 /* =====================================================================
@@ -916,18 +979,19 @@ function frame(now){
 function startGame(){
   if(G.started||!G.ready)return;
   G.started=true;document.body.classList.add('play');$('title').classList.add('off');
-  audio();startAmbient();sfx.blip();G.helpT=7;$('help').classList.add('on');showLoc('Home street');G.area='Home street';
+  audio();startAmbient();sfx.blip();G.helpT=7;$('help').classList.add('on');showLoc('Home street');G.area='Home street';track('start');
 }
 window.addEventListener('keydown',e=>{
   const k=e.key.toLowerCase();
-  if(G.modal){if(k==='escape')closeModal();return;}
+  if(G.modal){if(k==='escape'||(k==='m'&&G.modal==='guide'))closeModal();return;}
   if(PLAIN.isOpen()){if(k==='escape')PLAIN.close();return;}
   if(['arrowup','arrowdown','arrowleft','arrowright',' '].indexOf(k)>=0)e.preventDefault();
   if(k==='shift'){keys.shift=true;return;}
   if(!G.started){if(k==='enter'||k===' '||k==='e')startGame();return;}
   if(k==='e'||k==='enter'||k===' '){if(!e.repeat)action();return;}
   if(k==='n'){toggleNight();return;}
-  if(k==='m'){toggleSound();return;}
+  if(k==='m'){openModal('guide');return;}
+  if(k==='v'){toggleSound();return;}
   keys[k]=true;
 });
 window.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys[k]=false;if(k==='shift')keys.shift=false;});
@@ -955,48 +1019,87 @@ async function init(){
   try{await Promise.race([document.fonts.load('600 14px Fredoka'),new Promise(r=>setTimeout(r,1600))]);}catch(e){}
   await new Promise(r=>requestAnimationFrame(()=>r()));
   buildGround();BL.forEach(b=>{b.spr=renderBuilding(b);});TSPR=[0,1,2,3].map(treeSprite);
-  G.ready=true;const s=$('start');s.disabled=false;s.textContent='Press Enter or tap to start';
+  G.ready=true;const s=$('start');s.disabled=false;s.setAttribute('data-i18n','Press Enter or tap to start');s.textContent=say('Press Enter or tap to start');updFound();
   last=performance.now();requestAnimationFrame(frame);
 }
 /* =====================================================================
    modals: contact form + business card
    ===================================================================== */
-const ovForm=$('ovForm'),ovCard=$('ovCard');
+const ovForm=$('ovForm'),ovCard=$('ovCard'),ovGuide=$('ovGuide'),OV={form:ovForm,card:ovCard,guide:ovGuide};
 function openModal(kind){
-  if(G.modal)return;
+  if(G.modal||!OV[kind])return;
   for(const k in keys)keys[k]=false;
   joy.x=joy.y=0;joy.run=false;G.modal=kind;
-  const ov=kind==='form'?ovForm:ovCard;
+  const ov=OV[kind];if(kind==='guide')renderGuide();
+  ov.scrollTop=0;
   ov.classList.add('on');ov.setAttribute('aria-hidden','false');sfx.blip();
-  setTimeout(()=>{const t=kind==='form'?$('cfEmail'):$('bcard');if(t&&t.focus)t.focus();},60);
+  setTimeout(()=>{const t=kind==='form'?$('cfEmail'):kind==='card'?$('bcard'):$('gdClose');if(t&&t.focus)t.focus();},60);
   if(kind==='card'){const b=$('bcard');if(b)b.classList.remove('flip');}
 }
 function closeModal(){
   if(!G.modal)return;
-  const ov=G.modal==='form'?ovForm:ovCard;
+  const ov=OV[G.modal];
   ov.classList.remove('on');ov.setAttribute('aria-hidden','true');G.modal=null;
   if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
 }
-[ovForm,ovCard].forEach(ov=>ov.addEventListener('pointerdown',e=>{if(e.target===ov)closeModal();}));
+[ovForm,ovCard,ovGuide].forEach(ov=>ov.addEventListener('pointerdown',e=>{if(e.target===ov)closeModal();}));
 $('cfClose').addEventListener('click',closeModal);
 $('ccClose').addEventListener('click',closeModal);
-document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-modal]');if(t){e.preventDefault();openModal(t.dataset.modal);}});
+$('gdClose').addEventListener('click',closeModal);
+function renderGuide(){
+  $('gdSub').textContent=say('{n} of {m} found. A star marks what you haven’t opened yet.',{n:seen.size,m:ALLK.length});
+  drawGuideMap();
+  const L=$('gdList');L.textContent='';
+  PLACES.forEach(p=>{
+    const h=document.createElement('h3'),c=document.createElement('span'),ul=document.createElement('ul'),d=document.createElement('p');
+    h.textContent=say(p.label);c.textContent=p.keys.filter(k=>seen.has(k)).length+'/'+p.keys.length;h.appendChild(c);
+    if(PLACE_INFO[p.id])d.textContent=loc(PLACE_INFO[p.id],'d');
+    p.keys.forEach(k=>{const li=document.createElement('li');if(seen.has(k))li.className='ok';li.textContent=DL[k].name;ul.appendChild(li);});
+    L.appendChild(h);if(d.textContent)L.appendChild(d);L.appendChild(ul);
+  });
+}
+/* the picture at the top of the guide: the real ground, buildings and trees, scaled down */
+function drawGuideMap(){
+  const cvm=$('gdMap'),c=cvm.getContext('2d'),k=cvm.width/WPX;
+  c.setTransform(1,0,0,1,0,0);c.fillStyle='#3c7a4a';c.fillRect(0,0,cvm.width,cvm.height);
+  if(ground)c.drawImage(ground,0,0,cvm.width,cvm.height);
+  c.setTransform(k,0,0,k,0,0);
+  const list=[];
+  TREEL.forEach(tr=>{const s=TSPR[tr.k];if(s)list.push({y:tr.y,f:()=>{c.save();c.translate(tr.x,tr.y);c.scale(tr.s,tr.s);c.drawImage(s.c,-s.ax,-s.ay,s.W,s.H);c.restore();}});});
+  BL.forEach(b=>{if(b.spr)list.push({y:b.py+b.ph,f:()=>c.drawImage(b.spr,b.px-BPAD,b.py-BPAD,b.pw+BPAD*2,b.ph+BPAD*2)});});
+  list.sort((a,b)=>a.y-b.y).forEach(o=>o.f());
+  /* labels: a star in front of the name means there is still something unopened there */
+  const tag=(txt,x,y,todo,fill,ink)=>{
+    c.font='600 40px '+FONT;c.textAlign='center';c.textBaseline='middle';
+    const w=c.measureText(txt).width+(todo?46:0)+36,h=58;
+    rrect(c,x-w/2,y-h/2,w,h,29);c.fillStyle=fill||'rgba(255,246,226,.95)';c.fill();c.strokeStyle='#5a3b2e';c.lineWidth=4;c.stroke();
+    c.fillStyle=ink||'#34243a';c.fillText(txt,x+(todo?23:0),y+2);
+    if(todo){c.save();c.translate(x-w/2+34,y);c.beginPath();for(let i=0;i<10;i++){const r=i%2?7:16,a=i/10*6.283-1.571;c.lineTo(Math.cos(a)*r,Math.sin(a)*r);}c.closePath();c.fillStyle='#e39a1c';c.fill();c.restore();}
+  };
+  BL.forEach(b=>tag(say(b.label),b.px+b.pw/2,b.py+b.ph/2-8,b.todo));
+  tag(say('Futsal court'),(FX0+FX1)/2,GCY,!seen.has('friend'));
+  const here=G.scene==='world'?{x:P.x,y:P.y-10}:{x:B[G.scene].door.x+T,y:B[G.scene].py+B[G.scene].ph+26};
+  c.beginPath();c.arc(here.x,here.y,20,0,6.3);c.fillStyle='#e8442f';c.fill();c.lineWidth=7;c.strokeStyle='#fff';c.stroke();
+  tag(say('You are here'),clamp(here.x,190,WPX-190),here.y+(here.y>HPX-150?-62:62),false,'#e8442f','#fff');
+}
+window.addEventListener('tolie:lang',()=>{if(G.modal==='guide')renderGuide();});
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-modal]');if(t){e.preventDefault();if(t.blur)t.blur();openModal(t.dataset.modal);}});
 
 async function sendContact(d){
   if(CONTACT.web3formsKey){
     const r=await fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
       body:JSON.stringify({access_key:CONTACT.web3formsKey,subject:'[tolie.space] '+d.subject,from_name:'tolie.space contact form',name:d.email.split('@')[0],email:d.email,message:d.message,botcheck:''})});
     let j={};try{j=await r.json();}catch(e){}
-    if(!r.ok||j.success===false)throw new Error('Couldn’t send that. Please try again in a moment.');
+    if(!r.ok||j.success===false)throw new Error(say('Couldn’t send that. Please try again in a moment.'));
     return;
   }
   if(CONTACT.endpoint){
     const r=await fetch(CONTACT.endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});
-    if(!r.ok)throw new Error('Couldn’t send that. Please try again in a moment.');
+    if(!r.ok)throw new Error(say('Couldn’t send that. Please try again in a moment.'));
     return;
   }
   location.href='mailto:'+CONTACT.to+'?subject='+encodeURIComponent(d.subject)+'&body='+encodeURIComponent(d.message+'\n\n'+d.email);
-  throw new Error('The form isn’t connected yet, so I opened your email app instead.');
+  throw new Error(say('The form isn’t connected yet, so I opened your email app instead.'));
 }
 (function(){
   const f=$('contactForm'),st=$('cfStatus'),btn=$('cfSend');
@@ -1008,24 +1111,24 @@ async function sendContact(d){
     e.preventDefault();if(busy)return;
     const email=($('cfEmail').value||'').trim(),subject=($('cfSubject').value||'').trim(),msg=($('cfMsg').value||'').trim();
     clear();let bad=false;
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){err('cfEmailErr','Enter a valid email so I can reply.');bad=true;}
-    if(subject.length<2){err('cfSubjectErr','Add a short subject.');bad=true;}
-    if(msg.length<5){err('cfMsgErr','Write a message of at least a few words.');bad=true;}
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){err('cfEmailErr',say('Enter a valid email so I can reply.'));bad=true;}
+    if(subject.length<2){err('cfSubjectErr',say('Add a short subject.'));bad=true;}
+    if(msg.length<5){err('cfMsgErr',say('Write a message of at least a few words.'));bad=true;}
     if(bad)return;
-    if($('cfBot').value){st.textContent='Sent. Thanks, I’ll get back to you soon.';st.className='ok';return;}
-    if(Date.now()-lastSent<30000){st.textContent='Give it a few seconds before sending another.';st.className='bad';return;}
-    busy=true;btn.disabled=true;btn.textContent='Sending…';
+    if($('cfBot').value){st.textContent=say('Sent. Thanks, I’ll get back to you soon.');st.className='ok';return;}
+    if(Date.now()-lastSent<30000){st.textContent=say('Give it a few seconds before sending another.');st.className='bad';return;}
+    busy=true;btn.disabled=true;btn.textContent=say('Sending…');
     try{
       await sendContact({email:email,subject:subject,message:msg});
-      lastSent=Date.now();f.reset();st.textContent='Sent. Thanks, I’ll get back to you soon.';st.className='ok';sfx.goal();
+      lastSent=Date.now();f.reset();st.textContent=say('Sent. Thanks, I’ll get back to you soon.');st.className='ok';sfx.goal();track('contact-sent');
     }catch(ex){
       st.className='bad';
       if(ex&&ex.name==='TypeError'){
-        st.textContent='Couldn’t reach the mail service. ';
-        const a=document.createElement('a');a.href='mailto:'+CONTACT.to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(msg+'\n\n'+email);a.textContent='Email me directly instead.';st.appendChild(a);
-      }else st.textContent=(ex&&ex.message)||'Couldn’t send that. Please try again in a moment.';
+        st.textContent=say('Couldn’t reach the mail service. ');
+        const a=document.createElement('a');a.href='mailto:'+CONTACT.to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(msg+'\n\n'+email);a.textContent=say('Email me directly instead.');st.appendChild(a);
+      }else st.textContent=(ex&&ex.message)||say('Couldn’t send that. Please try again in a moment.');
     }
-    busy=false;btn.disabled=false;btn.textContent='Send';
+    busy=false;btn.disabled=false;btn.textContent=say('Send');
   });
 })();
 (function(){
@@ -1034,7 +1137,7 @@ async function sendContact(d){
   bc.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('a,button'))return;flip();});
   bc.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===bc){e.preventDefault();flip();}});
   $('ccFlip').addEventListener('click',flip);
-  call.addEventListener('click',e=>{if(shown)return;e.preventDefault();shown=true;call.setAttribute('href','tel:'+parts.join(''));call.removeAttribute('role');call.textContent=parts.join(' ');sfx.blip();});
+  call.addEventListener('click',e=>{if(shown)return;e.preventDefault();shown=true;call.setAttribute('href','tel:'+parts.join(''));call.removeAttribute('role');call.removeAttribute('data-i18n');call.textContent=parts.join(' ');sfx.blip();});
 })();
 window.__tolie={G:G,CONTACT:CONTACT,openModal:openModal,closeModal:closeModal,P:P,B:B,INT:INT,ball:ball,enterBuilding:enterBuilding,action:action,startGame:startGame};
 init();
