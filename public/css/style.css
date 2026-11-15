@@ -1,0 +1,122 @@
+:root{color-scheme:dark;--paper:#fff4dc;--ink:#34243a;--amber:#ffb454;--clay:#8a4a2e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#070b18;overflow:hidden;font-family:'Fredoka','Trebuchet MS',system-ui,sans-serif;color:var(--paper);-webkit-user-select:none;user-select:none;touch-action:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hud{position:fixed;pointer-events:none;z-index:10}
+#loc{left:50%;top:calc(18px + env(safe-area-inset-top,0px));transform:translate(-50%,-8px);padding:7px 22px;background:rgba(12,14,34,.74);border:1.5px solid rgba(255,214,150,.4);border-radius:999px;font-size:15px;letter-spacing:.06em;opacity:0;transition:opacity .5s,transform .5s;white-space:nowrap}
+#loc.on{opacity:1;transform:translate(-50%,0)}
+#score{left:calc(16px + env(safe-area-inset-left,0px));top:calc(16px + env(safe-area-inset-top,0px));padding:6px 16px;background:rgba(12,14,34,.74);border:1.5px solid rgba(255,214,150,.4);border-radius:14px;font-size:16px;opacity:0;transition:opacity .4s}
+#score.on{opacity:1}
+#score b{font-size:20px;color:var(--amber);margin-left:6px}
+#btns{right:calc(14px + env(safe-area-inset-right,0px));top:calc(14px + env(safe-area-inset-top,0px));display:flex;gap:8px;pointer-events:auto}
+#btns button{width:42px;height:42px;border-radius:50%;border:2px solid rgba(255,214,150,.45);background:rgba(12,14,34,.74);color:var(--paper);font:500 18px 'Fredoka',sans-serif;cursor:pointer}
+#btns button:hover{background:rgba(60,44,90,.85)}
+#btns button:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+#help{left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:14px;opacity:0;transition:opacity .8s;background:rgba(12,14,34,.7);padding:7px 16px;border-radius:999px;white-space:nowrap}
+#help.on{opacity:.9}
+#dlg{position:fixed;left:50%;bottom:calc(max(22px,17vh) + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);width:min(640px,calc(100vw - 28px));background:#fff6e2;color:var(--ink);border:3px solid #5a3b2e;border-radius:18px;padding:24px 24px 18px;box-shadow:0 7px 0 rgba(0,0,0,.28),0 18px 40px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:20}
+#dlg.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#dName{position:absolute;left:18px;top:-17px;background:#e8744f;color:#fff;border:3px solid #5a3b2e;border-radius:12px;padding:3px 16px;font-weight:600;font-size:15px}
+#dText{font-size:19px;line-height:1.5;min-height:58px;white-space:pre-wrap}
+#dLinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#dLinks a{color:#fff;background:#3f6aa8;border:2px solid #2d4b7a;border-radius:999px;padding:5px 15px;font-size:14px;text-decoration:none;font-weight:500}
+#dLinks a:hover{background:#4a79c0}
+#dLinks a:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+#dNext{position:absolute;right:20px;bottom:9px;font-size:14px;color:#e8744f;animation:bob 1s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+#title{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;background:radial-gradient(ellipse at 50% 28%,rgba(255,196,107,.2),transparent 58%),rgba(6,9,24,.58);backdrop-filter:blur(3px);transition:opacity .9s;cursor:pointer}
+#title.off{opacity:0;pointer-events:none}
+#title h1{margin:0;font-weight:600;font-size:clamp(44px,10vw,96px);letter-spacing:.02em;color:#fff4dc;text-shadow:0 4px 0 #8a4a2e,0 12px 34px rgba(255,170,90,.4)}
+#title p{margin:0;opacity:.88;font-size:clamp(15px,2.6vw,20px)}
+#start{margin-top:22px;padding:12px 30px;border-radius:999px;background:var(--amber);color:#3a2314;font:600 18px 'Fredoka',sans-serif;border:3px solid var(--clay);box-shadow:0 5px 0 var(--clay);cursor:pointer;animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{transform:translateY(-3px)}}
+#keys{margin-top:14px;font-size:14px;opacity:.7}
+#fade{position:fixed;inset:0;background:#05070f;opacity:0;pointer-events:none;z-index:25}
+#joy,#act{display:none;position:fixed;z-index:15;touch-action:none}
+#joy{left:calc(22px + env(safe-area-inset-left,0px));bottom:calc(26px + env(safe-area-inset-bottom,0px));width:124px;height:124px;border-radius:50%;background:rgba(255,244,220,.1);border:2px solid rgba(255,244,220,.3)}
+#knob{position:absolute;left:36px;top:36px;width:52px;height:52px;border-radius:50%;background:rgba(255,244,220,.45);border:2px solid rgba(255,244,220,.7)}
+#act{right:calc(26px + env(safe-area-inset-right,0px));bottom:calc(44px + env(safe-area-inset-bottom,0px));width:78px;height:78px;border-radius:50%;background:rgba(255,180,84,.55);border:3px solid rgba(255,244,220,.8);color:#fff;font:600 24px 'Fredoka',sans-serif}
+body.play.touch #joy,body.play.touch #act{display:block}
+@media (prefers-reduced-motion:reduce){#start,#dNext{animation:none}}
+.ov{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(5,7,18,.68);backdrop-filter:blur(3px);overflow:auto;touch-action:auto}
+.ov.on{display:flex}
+.panel{position:relative;width:min(480px,100%);background:#fff6e2;color:var(--ink);border:3px solid #5a3b2e;border-radius:18px;padding:26px 24px 22px;box-shadow:0 7px 0 rgba(0,0,0,.28),0 18px 40px rgba(0,0,0,.5);-webkit-user-select:text;user-select:text}
+.panel h2{margin:0 0 4px;font-size:24px;font-weight:600}
+.panel .sub{margin:0 0 12px;color:#6b5a60;font-size:15px}
+.panel label{display:block;font-weight:500;font-size:14px;margin:10px 0 4px}
+.panel input,.panel textarea{display:block;width:100%;font:400 16px 'Fredoka','Trebuchet MS',sans-serif;color:var(--ink);background:#fffdf6;border:2px solid #b89a7a;border-radius:10px;padding:9px 12px;outline:none;-webkit-user-select:text;user-select:text}
+.panel textarea{resize:vertical;min-height:110px}
+.panel input:focus,.panel textarea:focus{border-color:#3f6aa8;box-shadow:0 0 0 3px rgba(63,106,168,.25)}
+.hp{position:absolute!important;left:-9999px;width:1px;height:1px;opacity:0}
+.err{min-height:16px;font-size:13px;color:#b3321f;margin-top:3px}
+.row{display:flex;align-items:center;gap:12px;margin-top:8px}
+.row button{padding:10px 26px;border-radius:999px;background:var(--amber);color:#3a2314;font:600 16px 'Fredoka',sans-serif;border:3px solid var(--clay);box-shadow:0 4px 0 var(--clay);cursor:pointer}
+.row button:focus-visible,.x:focus-visible,.bcard:focus-visible,#ccFlip:focus-visible{outline:3px solid #3f6aa8;outline-offset:3px}
+#cfStatus{font-size:14px;line-height:1.35}
+#cfStatus.ok{color:#2f7a3d}
+#cfStatus.bad{color:#b3321f}
+#cfStatus a{color:#2d4b7a;font-weight:500}
+.x{position:absolute;top:10px;right:12px;width:34px;height:34px;border-radius:50%;border:2px solid #5a3b2e;background:#fff;color:#5a3b2e;font:600 20px/1 sans-serif;cursor:pointer;z-index:2}
+.cardwrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;width:min(440px,92vw)}
+.cardwrap .x{top:-14px;right:-10px;background:#fff6e2}
+.bcard{width:100%;aspect-ratio:7/4;perspective:1200px;cursor:pointer;position:relative;outline:none;-webkit-user-select:none;user-select:none}
+.bcard .in{position:absolute;inset:0;transition:transform .7s cubic-bezier(.3,.8,.3,1);transform-style:preserve-3d}
+.bcard.flip .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;border-radius:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.55);border:2px solid rgba(255,244,220,.55)}
+.front{background:radial-gradient(circle at 84% 20%,#fff7cf 0 4.5%,rgba(255,247,207,0) 5.5%),linear-gradient(165deg,#16204f 0%,#44589f 52%,#ee9f72 100%);color:#fff4dc}
+.front::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60px 20px at 22% 80%,rgba(255,255,255,.22),transparent 70%),radial-gradient(ellipse 90px 24px at 72% 88%,rgba(255,255,255,.18),transparent 70%),radial-gradient(ellipse 52px 15px at 56% 68%,rgba(255,255,255,.13),transparent 70%)}
+.avatar{position:absolute;left:7%;top:50%;transform:translateY(-50%);width:36%;aspect-ratio:1;border-radius:50%;object-fit:cover;border:4px solid #ffd27a;box-shadow:0 0 0 5px rgba(255,210,122,.25),0 8px 20px rgba(0,0,0,.4)}
+.who{position:absolute;left:49%;right:5%;top:50%;transform:translateY(-58%)}
+.who b{display:block;font-size:clamp(19px,5.4vw,27px);font-weight:600;line-height:1.15}
+.who span{display:block;margin-top:6px;font-size:clamp(12px,3.2vw,15px);opacity:.92}
+.site{position:absolute;left:49%;bottom:11%;font-size:clamp(12px,3.2vw,14px);color:#ffd27a}
+.back{transform:rotateY(180deg);background:#fff6e2;color:#34243a;padding:5% 6%;display:flex;flex-direction:column;justify-content:center;gap:8px;font-size:clamp(12px,3.3vw,15px)}
+.back div{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
+.back .k{min-width:68px;color:#8a6a58;font-size:.88em}
+.back a{color:#2d4b7a;text-decoration:none;font-weight:500}
+.back a:hover{text-decoration:underline}
+.back .fine{margin-top:2px;color:#9a8a7a;font-size:.85em}
+.hint{margin:0;color:#fff4dc;font-size:14px;opacity:.85}
+#ccFlip{padding:8px 22px;border-radius:999px;background:var(--amber);color:#3a2314;font:600 15px 'Fredoka',sans-serif;border:3px solid var(--clay);box-shadow:0 4px 0 var(--clay);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.bcard .in{transition:none}}
+
+/* plain view (js/plain.js) */
+#toPlain{margin-top:4px;padding:8px 12px;background:none;border:0;border-radius:8px;color:var(--paper);font:500 15px 'Fredoka',sans-serif;opacity:.85;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+#toPlain:hover{opacity:1}
+#toPlain:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+#plain{position:fixed;inset:0;z-index:35;overflow:auto;background:#fff6e2;color:var(--ink);color-scheme:light;touch-action:auto;-webkit-user-select:text;user-select:text;outline:none}
+#plain[hidden]{display:none}
+.pv{max-width:760px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(56px + env(safe-area-inset-bottom,0px));font-size:16px;line-height:1.55}
+.pv a{color:#2d4b7a;font-weight:500;text-underline-offset:3px}
+.pv button{font:500 15px 'Fredoka',sans-serif;cursor:pointer}
+.pv a:focus-visible,.pv button:focus-visible{outline:3px solid #3f6aa8;outline-offset:3px;border-radius:6px}
+.pv-back{padding:6px 14px;background:#fff;color:#5a3b2e;border:2px solid #5a3b2e;border-radius:999px}
+.pv-head{display:flex;align-items:center;gap:20px;margin:26px 0 14px}
+.pv-head img{width:96px;height:96px;flex:none;border-radius:50%;object-fit:cover;border:3px solid #5a3b2e}
+.pv h1{margin:0;font-size:clamp(28px,6vw,40px);font-weight:600;line-height:1.15}
+.pv-role{margin:4px 0 0;color:#6b5a60;font-size:17px}
+.pv .pv-sum{margin:0 0 18px;font-size:17px}
+.pv-links{display:flex;flex-wrap:wrap;gap:8px}
+.pv-links a,.pv-links button{padding:6px 16px;background:#3f6aa8;color:#fff;border:2px solid #2d4b7a;border-radius:999px;font-size:15px;text-decoration:none}
+.pv-links button,.pv-enter{background:var(--amber);color:#3a2314;border:2px solid var(--clay)}
+.pv section{margin-top:34px}
+.pv h2{margin:0 0 12px;padding-bottom:6px;border-bottom:2px solid rgba(90,59,46,.25);font-size:15px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#b4502f}
+.pv h3{margin:0;font-size:18px;font-weight:600}
+.pv p{margin:4px 0 0}
+.pv ul{list-style:none;margin:0;padding:0}
+.pv-meta{color:#6b5a60;font-size:14px}
+.pv-jobs li+li{margin-top:16px}
+.pv-proj{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px}
+.pv-proj li{display:flex;flex-direction:column;padding:14px 16px;background:#fff;border:2px solid rgba(90,59,46,.3);border-radius:14px}
+.pv-proj .pv-plinks{margin-top:auto;padding-top:10px;display:flex;gap:16px;font-size:15px}
+.pv-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px!important}
+.pv-tags span{padding:1px 10px;background:#f3e3c4;border:1px solid rgba(90,59,46,.25);border-radius:999px;font-size:13px}
+.pv dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:10px 18px}
+.pv dt{font-weight:600}
+.pv dd{margin:0}
+.pv-skills .pv-tags{margin-top:0!important}
+.pv footer{margin-top:40px;text-align:center}
+.pv-enter{padding:10px 26px;border-radius:999px;font-size:17px!important;box-shadow:0 4px 0 var(--clay)}
+@media (max-width:480px){.pv dl{grid-template-columns:1fr;gap:2px}.pv dd{margin-bottom:10px}.pv-head img{width:72px;height:72px}}
+.nojs{position:fixed;inset:0;z-index:50;overflow:auto;padding:40px 24px;background:#fff6e2;color:var(--ink);color-scheme:light;touch-action:auto;line-height:1.6}
+.nojs a{color:#2d4b7a}
